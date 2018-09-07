@@ -1,9 +1,30 @@
 const Eris = require('eris');
 const http = require('http');
 const express = require('express');
+var fs = require('fs');
+
+
+
+/// Manage settings
+function getConf(key) {
+  let data = fs.readFileSync( 'config.json')
+  return JSON.parse(data)[key];
+};
+
+function setConf(key, value) {
+  let data = fs.readFileSync( 'config.json')
+  let d = JSON.parse(data);
+  d[key] = value;
+  let s = JSON.stringify(d);
+
+  fs.writeFileSync("config.json", s); 
+};
+
+
 
 // Keep the bot alive
 // Alongside https://uptimerobot.com/
+
 // const app = express();
 // app.get("/", (request, response) => {
 //   console.log(Date.now() + " Ping Received");
@@ -14,16 +35,45 @@ const express = require('express');
 //   http.get(`http://${process.env.PROJECT_DOMAIN}.glitch.me/`);
 // }, 280000);
  
-const bot = new Eris(process.env.DISCORD_BOT_TOKEN);   // Replace DISCORD_BOT_TOKEN in .env with your bot accounts token
- 
-bot.on('ready', () => {                                // When the bot is ready
-    console.log('Ready!');                             // Log "Ready!"
+const bot = new Eris(process.env.DISCORD_BOT_TOKEN);
+const role = getConf('role');
+const channel = getConf('channel');
+
+
+bot.on('ready', () => {
+  console.log('Ready!');
 });
  
-bot.on('messageCreate', (msg) => {                     // When a message is created
-    if(msg.content.includes('!sup')) {                 // If the message content includes "1337"
-        bot.createMessage(msg.channel.id, 'Hello!');  // Send a message in the same channel with "damn it"
+bot.on('messageCreate', (msg) => {
+    if(msg.content.includes('!sub') && msg.channel.id == channel) {
+      
+      if (msg.content.includes('docs.google.com')) {
+        bot.pinMessage(msg.channel.id, msg.id);
+        bot.createMessage(msg.channel.id, 'Hey, <@&'+role+'>, a new submission has been pinned!');
+      } else {
+        bot.createMessage(msg.channel.id, 'Hey, <@'+msg.member.id+'>, you should include a Google Docs link!');
+      }
+      
+    } else if(msg.content.includes('!init') && msg.member.permission.has('administrator')){
+      
+      let m = msg.content.split(' ');
+      
+      if (m.length > 1) {
+    
+        let channel = m[1];
+        let role = m[2];
+        setConf('channel', channel);
+        setConf('role', role);
+
+        bot.createMessage(msg.channel.id, 'Initialized on channel ' + channel + ' with role ' + role);  
+        
+      } else {
+        bot.createMessage(msg.channel.id, 'Syntax is ``!init channel_id role_id``');  
+      }
+      
+    } else {
+      console.log(msg.channel.id + ' == ' + channel);
     }
 });
  
-bot.connect();                                         // Get the bot to connect to Discord
+bot.connect();
