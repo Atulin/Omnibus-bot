@@ -1,8 +1,7 @@
-# Discord 1337 Bot 🤖
+# Discord Omnibus bot
 
-A simple Discord bot that replies "damn it" whenever anyone says "1337"
+A simple Discord bot that replies to work in tandem with [School for New Writers' Omnibus](https://sfnw.online)
 
-![](https://cdn.glitch.com/f1b80a31-0733-40fb-a0dd-44c8c80c155d%2Fscreenshot.png?1506425519756)
 
 ## Prerequisites
 

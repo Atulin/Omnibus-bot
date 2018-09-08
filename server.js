@@ -20,7 +20,18 @@ function setConf(key, value) {
   fs.writeFileSync("config.json", s); 
 };
 
+function addConfArrItem(key, value) {
+  let data = fs.readFileSync( 'config.json')
+  let d = JSON.parse(data);
+  
+  if(d[key].indexOf(value) === -1) {
+      d[key].push(value);
+  }
+  
+  let s = JSON.stringify(d);
 
+  fs.writeFileSync("config.json", s); 
+}
 
 // Keep the bot alive
 // Alongside https://uptimerobot.com/
@@ -37,7 +48,7 @@ function setConf(key, value) {
  
 const bot = new Eris(process.env.DISCORD_BOT_TOKEN);
 const role = getConf('role');
-const channel = getConf('channel');
+const subChannels = getConf('submission-channels');
 
 
 bot.on('ready', () => {
@@ -91,7 +102,7 @@ bot.on('messageCreate', (msg) => {
 
       
       
-    } else if (msg.content.includes('!sub') && msg.channel.id == channel) {
+    } else if (msg.content.includes('!sub') && subChannels.indexOf(msg.channel.id) != -1) {
       
       // Submission command
       if (msg.content.includes('docs.google.com')) {
@@ -113,6 +124,7 @@ bot.on('messageCreate', (msg) => {
           let channel = m[1];
           let role = m[2];
           setConf('channel', channel);
+          addConfArrItem('submission-channels', channel)
           setConf('role', role);
 
           bot.createMessage(msg.channel.id, 'Initialized on channel ' + channel + ' with role ' + role);  
@@ -124,7 +136,7 @@ bot.on('messageCreate', (msg) => {
       }
       
     } else {
-      console.log(msg.channel.id + ' == ' + channel);
+      
     }
 });
  
