@@ -2,7 +2,7 @@ const Eris = require('eris');
 const http = require('http');
 const express = require('express');
 var fs = require('fs');
-
+const axios = require('axios');
 
 
 /// Manage settings
@@ -45,8 +45,55 @@ bot.on('ready', () => {
 });
  
 bot.on('messageCreate', (msg) => {
-    if(msg.content.includes('!sub') && msg.channel.id == channel) {
+  
+    if (msg.content === '!help'){
       
+      // Help command
+      bot.createMessage(msg.channel.id, {
+        embed: {
+            title: "Omnibus Bot Help", // Title of the embed
+            color: 0x0000F0, // Color, either in hex (show), or a base-10 integer
+            fields: [ // Array of field objects
+                {
+                    name: "!quote", // Field title
+                    value: "Show a random, writing-related quote", // Field
+                    inline: true // Whether you want multiple fields in same line
+                },
+                {
+                    name: "!sub [message]",
+                    value: "Used for pinning monthly prompt submissions. Has to contain a Gdoc link!",
+                    inline: true
+                }
+            ]
+        }
+    });
+    
+    } else if (msg.content === '!quote') {
+      
+      // Quote command
+      axios.get('https://sfnw.online/api/quotes.php')
+        .then(response => {
+          console.log(response.data.quote);
+          console.log(response.data.author);
+          bot.createMessage(msg.channel.id, {
+            embed: {
+                description: '*' + response.data.quote + '*',
+                color: 0x008000, // Color, either in hex (show), or a base-10 integer
+                footer: { // Footer text
+                    text: '~ '+response.data.author
+                }
+            }
+          });
+        })
+        .catch(error => {
+          console.log(error);
+        });
+
+      
+      
+    } else if (msg.content.includes('!sub') && msg.channel.id == channel) {
+      
+      // Submission command
       if (msg.content.includes('docs.google.com')) {
         bot.pinMessage(msg.channel.id, msg.id);
         bot.createMessage(msg.channel.id, 'Hey, <@&'+role+'>, a new submission has been pinned!');
@@ -54,21 +101,26 @@ bot.on('messageCreate', (msg) => {
         bot.createMessage(msg.channel.id, 'Hey, <@'+msg.member.id+'>, you should include a Google Docs link!');
       }
       
-    } else if(msg.content.includes('!init') && msg.member.permission.has('administrator')){
+    } else if(msg.member.permission.has('administrator')){
       
-      let m = msg.content.split(' ');
+      // Init command
+      if (msg.content.includes('!init')) {
       
-      if (m.length > 1) {
-    
-        let channel = m[1];
-        let role = m[2];
-        setConf('channel', channel);
-        setConf('role', role);
+        let m = msg.content.split(' ');
 
-        bot.createMessage(msg.channel.id, 'Initialized on channel ' + channel + ' with role ' + role);  
+        if (m.length > 1) {
+
+          let channel = m[1];
+          let role = m[2];
+          setConf('channel', channel);
+          setConf('role', role);
+
+          bot.createMessage(msg.channel.id, 'Initialized on channel ' + channel + ' with role ' + role);  
+
+        } else {
+          bot.createMessage(msg.channel.id, 'Syntax is ``!init channel_id role_id``');  
+        }
         
-      } else {
-        bot.createMessage(msg.channel.id, 'Syntax is ``!init channel_id role_id``');  
       }
       
     } else {
