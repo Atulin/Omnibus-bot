@@ -57,7 +57,7 @@ bot.on('ready', () => {
  
 bot.on('messageCreate', (msg) => {
   
-    if (msg.content === '!help'){
+    if (msg.content === '!h'){
       
       // Help command
       bot.createMessage(msg.channel.id, {
@@ -66,20 +66,24 @@ bot.on('messageCreate', (msg) => {
             color: 0x0000F0, // Color, either in hex (show), or a base-10 integer
             fields: [ // Array of field objects
                 {
-                    name: "!quote", // Field title
+                    name: "!quote (!q)", // Field title
                     value: "Show a random, writing-related quote", // Field
-                    inline: true // Whether you want multiple fields in same line
                 },
                 {
-                    name: "!sub [message]",
+                    name: "!sub (!s) [message]",
                     value: "Used for pinning monthly prompt submissions. Has to contain a Gdoc link!",
-                    inline: true
+                },
+                {
+                    name: "!art (!a) [query] [amount]",
+                    value: "Use for looking up lectures on sfnw.online. Query with more than 1 word needs to be enclosed in quotes. Amount is capped at 5.",
                 }
             ]
         }
     });
     
-    } else if (msg.content === '!quote') {
+    } else if (msg.content === '!quote' || msg.content === '!q') {
+
+        msg.delete();
       
       // Quote command
       axios.get('https://sfnw.online/api/quotes.php')
@@ -98,11 +102,48 @@ bot.on('messageCreate', (msg) => {
         })
         .catch(error => {
           console.log(error);
-        });
-
+        });   
       
+    } else if (msg.content.split(' ')[0] === '!art' || msg.content.split(' ')[0] === '!a'){
       
-    } else if (msg.content.includes('!sub') && subChannels.indexOf(msg.channel.id) != -1) {
+      let cmd = msg.content.match(/[^\s"]+|"([^"]*)"/gi);
+      cmd.map(s => s.trim());
+      
+      var res = bot.createMessage(msg.channel.id, 'Just give me a second to find it for you :ok_hand:');
+      
+        axios.get('https://sfnw.online/api/articles.php?search=' + cmd[1]+'&limit=' + Math.min(5, parseInt(cmd[2])))
+        .then(response => {
+          let arr = response.data;
+          
+          let fields = [];
+          var i;
+          for(i = 0; i < arr.length; i++) {
+            fields.push(
+              {
+                "name": arr[i].title,
+                "value": ' ``🖋`` By **' + arr[i].author.name + '** in ' + arr[i].category.name + ': [Read here](https://sfnw.online/art/' + arr[i].id + ')',
+              }
+            )
+          }
+          
+          
+          bot.createMessage(msg.channel.id, {
+            embed: {
+                title: 'Here\'s your search results for "' + cmd[1].replace(/^\|+|\|+$/g, '') + '"',
+                color: 0x008000, // Color, either in hex (show), or a base-10 integer
+                fields: fields
+            }
+          });
+          
+          res.then(response => {
+            response.delete()
+          });
+        })
+        .catch(error => {
+          console.log(error);
+        });   
+      
+    } else if ((msg.content.split(' ')[0] === '!sub' || msg.content.split(' ')[0] === '!s') && subChannels.indexOf(msg.channel.id) != -1) {
       
       // Submission command
       if (msg.content.includes('docs.google.com')) {
