@@ -3,6 +3,7 @@ const http = require('http');
 const express = require('express');
 var fs = require('fs');
 const axios = require('axios');
+var schedule = require('node-schedule');
 
 
 /// Manage settings
@@ -32,6 +33,28 @@ function addConfArrItem(key, value) {
 
   fs.writeFileSync("config.json", s); 
 }
+
+// Send quotes on schedule
+var j = schedule.scheduleJob('0 0 0,6,12,18 ? * * *', function(){
+  console.log('Today is recognized by Rebecca Black!');      // Quote command
+      axios.get('https://sfnw.online/api/quotes.php')
+        .then(response => {
+          console.log(response.data.quote);
+          console.log(response.data.author);
+          bot.createMessage('207507139130949632', {
+            embed: {
+                description: '*' + response.data.quote + '*',
+                color: 0x008000, // Color, either in hex (show), or a base-10 integer
+                footer: { // Footer text
+                    text: '~ '+response.data.author
+                }
+            }
+          });
+        })
+        .catch(error => {
+          console.log(error);
+        });  
+});
 
 // Keep the bot alive
 // Alongside https://uptimerobot.com/
