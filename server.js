@@ -6,16 +6,6 @@ const axios = require('axios');
 var schedule = require('node-schedule');
 
 
-const app = express();
-
-
-// Listen
-app.get("/", (request, response) => {
-  console.log(Date.now() + " Ping Received");
-  response.sendStatus(200);
-});
-app.listen(process.env.PORT);
-
 /// Manage settings
 function getConf(key) {
   let data = fs.readFileSync( 'config.json')
@@ -45,8 +35,8 @@ function addConfArrItem(key, value) {
 }
 
 // Send quotes on schedule
-var j = schedule.scheduleJob('0 0 0,6,12,18 ? * * *', function(){
-  console.log('Today is recognized by Rebecca Black!');      // Quote command
+var j = schedule.scheduleJob('0 0 0,4,8,12,16,20 ? * * *', function(){
+  console.log('Quote sent');      // Quote command
       axios.get('https://sfnw.online/api/quotes.php')
         .then(response => {
           console.log(response.data.quote);
@@ -91,39 +81,30 @@ bot.on('ready', () => {
 bot.on('messageCreate', (msg) => {
   
     if (msg.content === '!h'){
-      msg.delete();
       
       // Help command
       bot.createMessage(msg.channel.id, {
         embed: {
             title: "Omnibus Bot Help", // Title of the embed
-            color: 0xFFA811, // Color, either in hex (show), or a base-10 integer
+            color: 0x0000F0, // Color, either in hex (show), or a base-10 integer
             fields: [ // Array of field objects
                 {
-                    name: "!quote", // Field title
-                    value: "Show a random, writing-related quote.", // Field
+                    name: "!quote (!q)", // Field title
+                    value: "Show a random, writing-related quote", // Field
                 },
                 {
                     name: "!sub (!s) [message]",
                     value: "Used for pinning monthly prompt submissions. Has to contain a Gdoc link!",
                 },
-                // {
-                //     name: "!art (!a) [query] [amount]",
-                //     value: "Use for looking up lectures on sfnw.online. Query with more than 1 word needs to be enclosed in quotes. Amount is capped at 5.",
-                // },
                 {
-                    name: "!promptme",
-                    value: "Get a **@Prompt Me!** role to be notified about our monthly prompts!",
-                },
-                {
-                    name: "!unpromptme",
-                    value: "Remove the burden of **@Prompt Me!** role.",
+                    name: "!art (!a) [query] [amount]",
+                    value: "Use for looking up lectures on sfnw.online. Query with more than 1 word needs to be enclosed in quotes. Amount is capped at 5.",
                 }
             ]
         }
     });
     
-    } else if (msg.content === '!quote') {
+    } else if (msg.content === '!quote' || msg.content === '!q') {
 
         msg.delete();
       
@@ -195,21 +176,7 @@ bot.on('messageCreate', (msg) => {
         bot.createMessage(msg.channel.id, 'Hey, <@'+msg.member.id+'>, you should include a Google Docs link!');
       }
       
-    } else if (msg.content === '!promptme') {
-      
-      // Autorole command
-      msg.delete();
-      msg.member.addRole('496867564610387979');
-      bot.createMessage(msg.channel.id, 'Nice, **'+msg.member.nick+'**, you\'ll now be receiving prompt notifications!');
-      
-    }else if (msg.content === '!unpromptme') {
-      
-      // Autorole command
-      msg.delete();
-      msg.member.removeRole('496867564610387979');
-      bot.createMessage(msg.channel.id, 'Okay, **'+msg.member.nick+'**, we won\'t bother you with prompts any more 👌');
-      
-    }  else if(msg.member.permission.has('administrator')){
+    } else if(msg.member.permission.has('administrator')){
       
       // Init command
       if (msg.content.includes('!init')) {
